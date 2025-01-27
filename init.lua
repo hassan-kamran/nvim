@@ -2,14 +2,13 @@
 -- LuaRocks Paths
 ------------------
 pcall(function()
-	local lua_version = _VERSION:match("%d+%.%d+")
-	local home = os.getenv("HOME")
+  local lua_version = _VERSION:match("%d+%.%d+")
+  local home = os.getenv("HOME")
 
-	package.path = package.path .. ";" .. home .. "/.luarocks/share/lua/" .. lua_version .. "/?.lua"
-	package.path = package.path .. ";" .. home .. "/.luarocks/share/lua/" .. lua_version .. "/?/init.lua"
-	package.cpath = package.cpath .. ";" .. home .. "/.luarocks/lib/lua/" .. lua_version .. "/?.so"
+  package.path = package.path .. ";" .. home .. "/.luarocks/share/lua/" .. lua_version .. "/?.lua"
+  package.path = package.path .. ";" .. home .. "/.luarocks/share/lua/" .. lua_version .. "/?/init.lua"
+  package.cpath = package.cpath .. ";" .. home .. "/.luarocks/lib/lua/" .. lua_version .. "/?.so"
 end)
-
 
 -- Basic Settings
 vim.g.mapleader = " "
@@ -90,19 +89,13 @@ require("lazy").setup({
       "saadparwaiz1/cmp_luasnip",
     },
   },
-
-  -- Formatting
-  {
-    "stevearc/conform.nvim",
-    opts = {},
-  },
 })
 
 -- LSP Setup
 local lspconfig = require("lspconfig")
 local capabilities = require("cmp_nvim_lsp").default_capabilities()
 
--- Ruff LSP Configuration
+-- Ruff LSP Configuration (Formatting + Linting)
 lspconfig.ruff.setup({
   capabilities = capabilities,
   init_options = {
@@ -121,20 +114,26 @@ lspconfig.ruff.setup({
     },
   },
   on_attach = function(client, bufnr)
-    -- Format on save
+    -- Format on save with Ruff only
     vim.api.nvim_create_autocmd("BufWritePre", {
       buffer = bufnr,
       callback = function()
-        vim.lsp.buf.format({ async = false })
-      end,
+        vim.lsp.buf.format({
+          async = false,
+          filter = function(client)
+            return client.name == "ruff"
+          end
+        })
+      end
     })
-  end,
+  end
 })
 
--- Pyright Configuration (for type checking)
+-- Pyright Configuration (Type checking only)
 lspconfig.pyright.setup({
   capabilities = capabilities,
   on_attach = function(client, bufnr)
+    -- Disable Pyright formatting capabilities
     client.server_capabilities.documentFormattingProvider = false
   end,
   settings = {
@@ -188,7 +187,6 @@ vim.keymap.set("n", "gr", vim.lsp.buf.references, { desc = "Show references" })
 vim.keymap.set("n", "K", vim.lsp.buf.hover, { desc = "Show documentation" })
 vim.keymap.set("n", "<leader>rn", vim.lsp.buf.rename, { desc = "Rename symbol" })
 vim.keymap.set("n", "<leader>ca", vim.lsp.buf.code_action, { desc = "Code actions" })
-vim.keymap.set("n", "<leader>ff", vim.lsp.buf.format, { desc = "Format buffer" })
 
 -- Quality of Life Improvements
 vim.opt.list = true
